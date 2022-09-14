@@ -1,0 +1,17 @@
+{
+  "name": "router-manager",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "postinstall": "./install.sh"
+  },
+  "dependencies": {
+    "@apollo/composition": "^2.1.1",
+    "execa": "^6.1.0",
+    "graphql": "^16.6.0",
+    "js-yaml": "^4.1.0",
+    "undici": "^5.10.0"
+  }
+}

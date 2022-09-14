@@ -1,0 +1,7 @@
+services:
+  router:
+    build: .
+    environment:
+      - PORT=4005
+    ports:
+      - 4005:4005
