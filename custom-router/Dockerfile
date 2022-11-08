@@ -1,0 +1,43 @@
+# Use the rust build image from docker as our base
+# renovate-automation: rustc version
+FROM rust:1.63.0 as build
+
+# Set our working directory for the build
+WORKDIR /usr/src/router
+
+# Update our build image and install required packages
+RUN apt-get update
+RUN apt-get -y install \
+    npm \
+    nodejs
+
+# Add rustfmt since build requires it
+RUN rustup component add rustfmt
+
+# Copy the router source to our build environment
+COPY . .
+
+# Build and install the router
+RUN cargo install --path .
+
+# Make directories for config and schema
+RUN mkdir -p /dist/config && \
+    mkdir /dist/schema && \
+    mv /usr/local/cargo/bin/router /dist
+
+# Required so we can copy in libz.so.1
+FROM --platform=linux/amd64 gcr.io/distroless/java17-debian11 as libz-required
+
+# Final image uses distroless. Feel free to change this to an image that suits your needs.
+FROM gcr.io/distroless/cc-debian11
+
+# Copy in the extracted/created files
+COPY --from=libz-required /lib/x86_64-linux-gnu/libz.so.1 /lib/x86_64-linux-gnu/libz.so.1
+
+# Copy in the required files from our build image
+COPY --from=build --chown=root:root /dist /dist
+
+WORKDIR /dist
+
+# Default executable is the router
+ENTRYPOINT ["/dist/router"]

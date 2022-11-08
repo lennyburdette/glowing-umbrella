@@ -1,0 +1,3 @@
+plugins:
+  example.node_bridge:
+    message: "hello world"

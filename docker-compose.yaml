@@ -1,7 +1,26 @@
 services:
-  router:
+  gateway:
     build: .
     environment:
-      - PORT=4005
+      - PORT=4000
+      - INTERNAL_PORT=4001
+      - APOLLO_KEY
+      - APOLLO_GRAPH_REF
     ports:
-      - 4005:4005
+      - 4000:4000
+  subgraph_one:
+    build:
+      context: .
+      dockerfile: Dockerfile.subgraph
+      args:
+        - BUILD_CONTEXT=example/subgraphs/one
+    environment:
+      - PORT=6001
+  subgraph_two:
+    build:
+      context: .
+      dockerfile: Dockerfile.subgraph
+      args:
+        - BUILD_CONTEXT=example/subgraphs/two
+    environment:
+      - PORT=6002

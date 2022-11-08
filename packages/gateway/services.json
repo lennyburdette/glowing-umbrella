@@ -1,0 +1,12 @@
+{
+  "services": {
+    "one": {
+      "host": "subgraph_one",
+      "port": 6001
+    },
+    "two": {
+      "host": "subgraph_two",
+      "port": 6002
+    }
+  }
+}

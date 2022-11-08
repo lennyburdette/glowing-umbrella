@@ -1,0 +1,12 @@
+{
+  "name": "two",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@apollo/server": "^4.1.1",
+    "@apollo/subgraph": "^2.1.4",
+    "graphql": "^16.6.0"
+  }
+}
