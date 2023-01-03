@@ -8,6 +8,8 @@ services:
       - APOLLO_GRAPH_REF
     ports:
       - 4000:4000
+      - 4001:4001
+      - 9090:9090
   subgraph_one:
     build:
       context: .

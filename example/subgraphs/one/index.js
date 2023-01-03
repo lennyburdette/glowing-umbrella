@@ -1,7 +1,7 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { buildSubgraphSchema } from "@apollo/subgraph";
-import { parse } from "graphql";
+import { GraphQLError, parse } from "graphql";
 import { readFileSync } from "fs";
 
 const server = new ApolloServer({
@@ -9,7 +9,10 @@ const server = new ApolloServer({
     typeDefs: parse(readFileSync("schema.graphql", "utf-8")),
     resolvers: {
       Query: {
-        one: () => true,
+        one: () => {
+          if (Math.random() < 0.2) throw new Error("whoops");
+          return true;
+        },
       },
     },
   }),
@@ -17,6 +20,11 @@ const server = new ApolloServer({
     {
       async requestDidStart({ request }) {
         console.log(request.http?.headers);
+        return {
+          async didEncounterErrors({ response }) {
+            response.http.status = 500;
+          },
+        };
       },
     },
   ],

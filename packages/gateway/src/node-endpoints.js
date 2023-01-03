@@ -1,6 +1,6 @@
-import express from "express";
+import express, { json } from "express";
 import { readFileSync } from "fs";
-import { auth } from "./auth.js";
+import { handleRouterStage } from "./router-stage.js";
 import { proxyRequest } from "./proxy.js";
 
 export class NodeEndpoints {
@@ -30,12 +30,8 @@ export class NodeEndpoints {
     this.#healthChecks.push(check);
   }
 
-  get authAddress() {
-    return `http://127.0.0.1:${this.port}/auth`;
-  }
-
-  get subgraphProxyAddress() {
-    return `http://127.0.0.1:${this.port}/subgraph-proxy`;
+  get routerStageUrl() {
+    return `http://127.0.0.1:${this.port}/router_stage`;
   }
 
   async run() {
@@ -51,7 +47,14 @@ export class NodeEndpoints {
       }
     });
 
-    app.get("/auth", auth);
+    app.post(
+      "/router_stage",
+      json(),
+      handleRouterStage({
+        subgraphProxyHost: `127.0.0.1:${this.port}`,
+        subgraphProxyPath: "/subgraph-proxy",
+      })
+    );
 
     app.post("/subgraph-proxy/:subgraph", async (req, res) => {
       const { subgraph } = req.params;
@@ -62,9 +65,11 @@ export class NodeEndpoints {
       await proxyRequest(req, res, url);
     });
 
-    await new Promise((resolve) => {
-      app.listen(this.port, () => resolve(1));
-    });
+    await /** @type {Promise<void>} */ (
+      new Promise((resolve) => {
+        app.listen(this.port, () => resolve());
+      })
+    );
 
     console.log("running node endpoints");
   }

@@ -1,63 +1,47 @@
 import { execa } from "execa";
-import { writeFile } from "fs/promises";
-import { dump } from "js-yaml";
 import { fetch } from "undici";
 
 export class RouterWrapper {
-  /** @type {string} */
-  healthCheckListen = "127.0.0.1:8088";
+  /**
+   * @param {{
+   *  healthCheckPort: string;
+   *  metricsPort: string;
+   * }} params
+   */
+  constructor({ healthCheckPort, metricsPort }) {
+    this.healthCheckPort = healthCheckPort;
+    this.healthCheckListen = `127.0.0.0.1:${healthCheckPort}/health`;
+    this.metricsPort = metricsPort;
+  }
 
   get healthCheck() {
     return async () => {
-      const resp = await fetch(`http://${this.healthCheckListen}/health`);
+      const resp = await fetch(this.healthCheckListen);
       console.log(`router healthy: ${resp.ok}`);
       return resp.ok;
     };
   }
 
   /**
-   * @param {{ port: string; authEndpoint: string; subgraphProxyEndpoint: string; }} params
+   * @param {{ routerStageUrl: string }} param0
    */
-  async writeConfig({ port, authEndpoint, subgraphProxyEndpoint }) {
-    return writeFile(
-      "router.yaml",
-      dump({
-        supergraph: {
-          listen: `0.0.0.0:${port}`,
+  async run({ routerStageUrl }) {
+    const proc = execa(
+      "./router",
+      ["-c", "./router.yaml", "--hr", "--dev" /*, "--log", "debug'*/],
+      {
+        env: {
+          ROUTER_STAGE_URL: routerStageUrl,
+          HEALTH_CHECK_PORT: this.healthCheckPort,
+          METRICS_PORT: this.metricsPort,
         },
-        "health-check": {
-          listen: this.healthCheckListen,
-          enabled: true,
-        },
-        plugins: {
-          "example.node_bridge": {
-            supergraph_request_filter: authEndpoint,
-            subgraph_url_override: subgraphProxyEndpoint,
-          },
-        },
-        headers: {
-          all: {
-            request: [
-              {
-                propagate: {
-                  named: "authorization",
-                },
-              },
-            ],
-          },
-        },
-      }),
-      "utf-8"
+        // expects:
+        // - PORT
+        // - APOLLO_KEY
+        // - APOLLO_GRAPH_REF
+        extendEnv: true,
+      }
     );
-  }
-
-  /**
-   * @param {{ port: string; authEndpoint: string; subgraphProxyEndpoint: string; }} params
-   */
-  async run(params) {
-    await this.writeConfig(params);
-
-    const proc = execa("./router", ["-c", "./router.yaml", "--hr", "--dev"]);
 
     proc.stdout?.pipe(process.stdout);
     proc.stderr?.pipe(process.stderr);

@@ -5,7 +5,6 @@
     "packages/*"
   ],
   "scripts": {
-    "publish": "./scripts/publish.sh",
-    "build:router": "./scripts/build_and_install_router.sh"
+    "subgraphs:publish": "./scripts/publish.sh"
   }
 }

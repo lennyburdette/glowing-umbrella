@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=router.config.json
+supergraph:
+  listen: 0.0.0.0:${env.PORT}
+health-check:
+  listen: 127.0.0.1:${env.HEALTH_CHECK_PORT}
+  enabled: true
+headers:
+  all:
+    request:
+      - propagate:
+          named: authorization
+telemetry:
+  metrics:
+    prometheus:
+      enabled: true
+      listen: 0.0.0.0:${env.METRICS_PORT}
+      path: /metrics
+plugins:
+  experimental.external:
+    url: ${env.ROUTER_STAGE_URL}
+    timeout: 2s
+    stages:
+      router:
+        request:
+          headers: true
+          context: true
+rhai: {}

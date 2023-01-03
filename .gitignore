@@ -1,7 +1,6 @@
 .env
 node_modules
 **/router
-packages/**/router.yaml
 target
 .idea
 **/out
