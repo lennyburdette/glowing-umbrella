@@ -10,7 +10,7 @@ export class RouterWrapper {
    */
   constructor({ healthCheckPort, metricsPort }) {
     this.healthCheckPort = healthCheckPort;
-    this.healthCheckListen = `127.0.0.0.1:${healthCheckPort}/health`;
+    this.healthCheckListen = `http://127.0.0.1:${healthCheckPort}/health`;
     this.metricsPort = metricsPort;
   }
 
