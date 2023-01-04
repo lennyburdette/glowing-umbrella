@@ -38,10 +38,16 @@ export class NodeEndpoints {
     const app = express();
 
     app.get("/health", async (_, res) => {
-      const checks = await Promise.all(this.#healthChecks.map((fn) => fn()));
-      if (checks.every((success) => success)) {
-        res.json({ ok: true });
-      } else {
+      try {
+        const checks = await Promise.all(this.#healthChecks.map((fn) => fn()));
+        if (checks.every((success) => success)) {
+          res.json({ ok: true });
+        } else {
+          res.statusCode = 500;
+          res.json({ ok: false });
+        }
+      } catch (e) {
+        console.error(e);
         res.statusCode = 500;
         res.json({ ok: false });
       }
@@ -58,11 +64,30 @@ export class NodeEndpoints {
 
     app.post("/subgraph-proxy/:subgraph", async (req, res) => {
       const { subgraph } = req.params;
-      const { host, port } = this.services[subgraph] ?? {};
-      const url = `http://${host}:${port}/`;
+      try {
+        const { host, port } = this.services[subgraph] ?? {};
 
-      console.log(`proxy request for subgraph ${subgraph} -> ${url}`);
-      await proxyRequest(req, res, url);
+        if (!host || !port) {
+          res.statusCode = 500;
+          res.json({
+            data: null,
+            errors: [{ message: `Invalid subgraph ${subgraph}` }],
+          });
+          return;
+        }
+
+        const url = `http://${host}:${port}/`;
+
+        console.log(`proxy request for subgraph ${subgraph} -> ${url}`);
+        await proxyRequest(req, res, url);
+      } catch (e) {
+        console.error(e);
+        res.statusCode = 500;
+        res.json({
+          data: null,
+          errors: [{ message: `Error proxying to subgraph ${subgraph}` }],
+        });
+      }
     });
 
     await /** @type {Promise<void>} */ (

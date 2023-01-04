@@ -7,38 +7,48 @@ export function handleRouterStage({ subgraphProxyHost, subgraphProxyPath }) {
    * @param {import("express").Response} res
    */
   return async (req, res) => {
-    if (!isRouterRequest(req.body)) {
-      console.log("not a router request");
+    try {
+      if (!isRouterRequest(req.body)) {
+        console.log("not a router request");
+        res.json({
+          version: 1,
+          control: { Break: 500 },
+          body: "Internal server error",
+        });
+        return;
+      }
+
+      const [isAuthorized, newHeaders] = authorize(req.body.headers);
+
+      if (isAuthorized) {
+        console.log("request authorized");
+        const resp = {
+          ...req.body,
+          headers: { ...req.body.headers, ...newHeaders },
+          context: {
+            entries: {
+              ...req.body.context.entries,
+              subgraph_proxy_host: subgraphProxyHost,
+              subgraph_proxy_path: subgraphProxyPath,
+            },
+          },
+        };
+        res.json(resp);
+      } else {
+        console.log("not authorized");
+        res.json({
+          ...req.body,
+          control: { Break: 401 },
+          body: "Not authorized",
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      res.statusCode = 500;
       res.json({
         version: 1,
         control: { Break: 500 },
         body: "Internal server error",
-      });
-      return;
-    }
-
-    const [isAuthorized, newHeaders] = authorize(req.body.headers);
-
-    if (isAuthorized) {
-      console.log("request authorized");
-      const resp = {
-        ...req.body,
-        headers: { ...req.body.headers, ...newHeaders },
-        context: {
-          entries: {
-            ...req.body.context.entries,
-            subgraph_proxy_host: subgraphProxyHost,
-            subgraph_proxy_path: subgraphProxyPath,
-          },
-        },
-      };
-      res.json(resp);
-    } else {
-      console.log("not authorized");
-      res.json({
-        ...req.body,
-        control: { Break: 401 },
-        body: "Not authorized",
       });
     }
   };

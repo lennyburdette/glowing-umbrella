@@ -19,3 +19,7 @@ await Promise.all([
   }),
   nodeEndpoints.run(),
 ]);
+
+process.on("unhandledRejection", (error) => {
+  console.log("unhandledRejection", error);
+});
